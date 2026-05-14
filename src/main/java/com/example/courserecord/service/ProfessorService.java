@@ -4,7 +4,8 @@ import com.example.courserecord.dto.ProfessorDto;
 import com.example.courserecord.dto.ProfessorPayload;
 import com.example.courserecord.entity.Professor;
 import com.example.courserecord.repository.ProfessorRepository;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +22,8 @@ public class ProfessorService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProfessorDto> findAll() {
-        return professorRepository.findAll().stream().map(this::toDto).toList();
+    public Page<ProfessorDto> findAll(Pageable pageable) {
+        return professorRepository.findAll(pageable).map(this::toDto);
     }
 
     @Transactional(readOnly = true)

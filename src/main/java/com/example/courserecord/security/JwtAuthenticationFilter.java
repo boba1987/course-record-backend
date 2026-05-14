@@ -1,14 +1,11 @@
 package com.example.courserecord.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,13 +21,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-    private final ObjectMapper objectMapper;
 
-    public JwtAuthenticationFilter(
-            JwtService jwtService, UserDetailsService userDetailsService, ObjectMapper objectMapper) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
-        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -44,8 +38,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+        String jwt = authHeader.substring(7).trim();
+        if (!StringUtils.hasText(jwt)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         try {
-            String jwt = authHeader.substring(7);
             String username = jwtService.extractUsername(jwt);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -58,11 +56,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
+            // Bad/expired JWT: do not short-circuit here. permitAll() routes must still work;
+            // protected routes will fail authorization and use the AuthenticationEntryPoint.
             SecurityContextHolder.clearContext();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            objectMapper.writeValue(response.getOutputStream(), Map.of("error", "Unauthorized"));
-            return;
         }
         filterChain.doFilter(request, response);
     }

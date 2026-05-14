@@ -4,7 +4,8 @@ import com.example.courserecord.dto.AuthorDto;
 import com.example.courserecord.dto.AuthorPayload;
 import com.example.courserecord.entity.Author;
 import com.example.courserecord.repository.AuthorRepository;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +22,8 @@ public class AuthorService {
     }
 
     @Transactional(readOnly = true)
-    public List<AuthorDto> findAll() {
-        return authorRepository.findAll().stream().map(this::toDto).toList();
+    public Page<AuthorDto> findAll(Pageable pageable) {
+        return authorRepository.findAll(pageable).map(this::toDto);
     }
 
     @Transactional(readOnly = true)

@@ -3,10 +3,14 @@ package com.example.courserecord.web;
 import com.example.courserecord.dto.StudentDto;
 import com.example.courserecord.dto.StudentPayload;
 import com.example.courserecord.service.StudentService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,8 +36,10 @@ public class StudentController {
     }
 
     @GetMapping
-    public List<StudentDto> list() {
-        return studentService.findAll();
+    @Operation(summary = "List students (paginated)")
+    public Page<StudentDto> list(
+            @ParameterObject @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return studentService.findAll(pageable);
     }
 
     @GetMapping("/{id}")

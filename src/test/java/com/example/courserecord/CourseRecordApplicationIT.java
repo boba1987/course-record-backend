@@ -2,6 +2,7 @@ package com.example.courserecord;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.courserecord.dto.auth.LoginRequest;
@@ -30,9 +31,18 @@ class CourseRecordApplicationIT {
 
     @Test
     void publicCatalogEndpointsReturn200WithoutAuth() throws Exception {
-        mockMvc.perform(get("/api/public/courses")).andExpect(status().isOk());
-        mockMvc.perform(get("/api/public/books")).andExpect(status().isOk());
-        mockMvc.perform(get("/api/public/authors")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/public/courses"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.page").exists());
+        mockMvc.perform(get("/api/public/books"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.page").exists());
+        mockMvc.perform(get("/api/public/authors"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.page").exists());
     }
 
     @Test

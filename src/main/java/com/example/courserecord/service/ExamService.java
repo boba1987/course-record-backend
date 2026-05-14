@@ -8,7 +8,8 @@ import com.example.courserecord.entity.Student;
 import com.example.courserecord.repository.CourseRepository;
 import com.example.courserecord.repository.ExamRepository;
 import com.example.courserecord.repository.StudentRepository;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +31,8 @@ public class ExamService {
     }
 
     @Transactional(readOnly = true)
-    public List<ExamDto> findAll() {
-        return examRepository.findAll().stream().map(this::toDto).toList();
+    public Page<ExamDto> findAll(Pageable pageable) {
+        return examRepository.findAll(pageable).map(this::toDto);
     }
 
     @Transactional(readOnly = true)

@@ -17,7 +17,17 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI courseRecordOpenApi() {
         return new OpenAPI()
-                .info(new Info().title("Course Record API").version("v1"))
+                .info(
+                        new Info()
+                                .title("Course Record API")
+                                .version("v1")
+                                .description(
+                                        "All endpoints that return collections use Spring Data pagination. "
+                                                + "Optional query parameters: `page` (0-based, default 0), `size` "
+                                                + "(default 20, maximum 100), `sort` (e.g. `sort=id,asc`). "
+                                                + "Responses use Spring Data’s stable `PagedModel` JSON: array field "
+                                                + "`content`, plus nested object `page` with `size`, `number`, "
+                                                + "`totalElements`, and `totalPages`."))
                 .components(
                         new Components()
                                 .addSecuritySchemes(
@@ -42,6 +52,6 @@ public class OpenApiConfig {
                                 new Tag().name("Admin — Authors").description("Author CRUD"),
                                 new Tag().name("Admin — Books").description("Book CRUD"),
                                 new Tag().name("Admin — Course books").description("Course–book link CRUD"),
-                                new Tag().name("Public").description("Public read-only catalog")));
+                                new Tag().name("Public").description("Public read-only catalog (paginated list endpoints)")));
     }
 }

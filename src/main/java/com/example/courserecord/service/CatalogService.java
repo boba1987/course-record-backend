@@ -16,6 +16,13 @@ import com.example.courserecord.repository.BookRepository;
 import com.example.courserecord.repository.CourseRepository;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,16 +41,35 @@ public class CatalogService {
         this.authorRepository = authorRepository;
     }
 
-    public List<CatalogCourseDto> listCourses() {
-        return courseRepository.findAllForPublicCatalog().stream().map(this::toCatalogCourse).toList();
+    public Page<CatalogCourseDto> listCourses(Pageable pageable) {
+        Page<Long> idPage = courseRepository.findIdsForPublicCatalog(pageable);
+        if (idPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<Long> ids = idPage.getContent();
+        List<Course> courses = courseRepository.findAllForPublicCatalogWithProfessorAndSemestersByIdIn(ids);
+        courseRepository.findAllForPublicCatalogWithBooks(ids);
+        Map<Long, Course> byId = courses.stream().collect(Collectors.toMap(Course::getId, Function.identity()));
+        List<CatalogCourseDto> content =
+                ids.stream().map(byId::get).filter(Objects::nonNull).map(this::toCatalogCourse).toList();
+        return new PageImpl<>(content, pageable, idPage.getTotalElements());
     }
 
-    public List<CatalogBookDto> listBooks() {
-        return bookRepository.findAllWithAuthor().stream().map(this::toCatalogBook).toList();
+    public Page<CatalogBookDto> listBooks(Pageable pageable) {
+        Page<Long> idPage = bookRepository.findIdsForPublicCatalog(pageable);
+        if (idPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<Long> ids = idPage.getContent();
+        List<Book> books = bookRepository.findAllWithAuthorByIdIn(ids);
+        Map<Long, Book> byId = books.stream().collect(Collectors.toMap(Book::getId, Function.identity()));
+        List<CatalogBookDto> content =
+                ids.stream().map(byId::get).filter(Objects::nonNull).map(this::toCatalogBook).toList();
+        return new PageImpl<>(content, pageable, idPage.getTotalElements());
     }
 
-    public List<CatalogAuthorDto> listAuthors() {
-        return authorRepository.findAll().stream().map(this::toCatalogAuthor).toList();
+    public Page<CatalogAuthorDto> listAuthors(Pageable pageable) {
+        return authorRepository.findAll(pageable).map(this::toCatalogAuthor);
     }
 
     private CatalogCourseDto toCatalogCourse(Course c) {

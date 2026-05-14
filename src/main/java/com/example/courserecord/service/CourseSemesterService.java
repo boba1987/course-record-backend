@@ -6,7 +6,8 @@ import com.example.courserecord.entity.Course;
 import com.example.courserecord.entity.CourseSemester;
 import com.example.courserecord.repository.CourseRepository;
 import com.example.courserecord.repository.CourseSemesterRepository;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,8 +27,8 @@ public class CourseSemesterService {
     }
 
     @Transactional(readOnly = true)
-    public List<CourseSemesterDto> findAll() {
-        return courseSemesterRepository.findAll().stream().map(this::toDto).toList();
+    public Page<CourseSemesterDto> findAll(Pageable pageable) {
+        return courseSemesterRepository.findAll(pageable).map(this::toDto);
     }
 
     @Transactional(readOnly = true)
