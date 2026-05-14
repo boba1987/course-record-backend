@@ -14,3 +14,6 @@ jwt.expiration-ms=3600000
 # Bootstrap admin (seeded when DB is empty)
 app.admin.username=admin
 app.admin.password=CHANGE_ME
+
+# Browser front-end origins (comma-separated). Match Next.js dev server.
+# app.cors.allowed-origins=http://localhost:3000

@@ -89,6 +89,12 @@ Swagger: use **Authorize** → HTTP bearer scheme **`bearer-jwt`** → paste the
 - **Pagination**: list endpoints accept optional `page`, `size`, and `sort` (defaults: page **0**, size **20**, max size **100**). JSON uses Spring Data **`PagedModel`**: array **`content`** plus nested **`page`** (`size`, `number`, `totalElements`, `totalPages`).
 - **Security**: `GET /api/public/**`, auth login, and Swagger/OpenAPI paths are public; other routes require **ROLE_ADMIN** JWT.
 
+### CORS (browser / Next.js)
+
+- Property **`app.cors.allowed-origins`**: comma-separated list of allowed browser origins (default in repo: `http://localhost:3000`).
+- **`Access-Control-Allow-Credentials`** is **false** by default (JWT is sent via `Authorization` header; no cookie required). Origins are still explicit (not `*`).
+- Override in `config/application-local.properties` for staging/production front-end URLs.
+
 ---
 
 ## Database and migrations
