@@ -243,4 +243,10 @@
                              constraintName="uk_course_book_course_book"/>
     </changeSet>
 
+    <changeSet id="setup-011" author="course-record">
+        <addColumn tableName="course">
+            <column name="description" type="TEXT"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

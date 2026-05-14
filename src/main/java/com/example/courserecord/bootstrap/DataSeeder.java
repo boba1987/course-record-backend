@@ -66,6 +66,7 @@ public class DataSeeder implements ApplicationRunner {
         Course course = new Course();
         course.setCode("NST");
         course.setTitle("Napredne softverske tehnologije");
+        course.setDescription("Praktični rad sa modernim softverskim stekom i arhitekturom veb aplikacija.");
         course.setEspb(6);
         course.setProfessor(savic);
 

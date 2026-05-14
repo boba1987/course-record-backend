@@ -28,6 +28,9 @@ public class Course {
     @Column(nullable = false, length = 255)
     private String title;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Column(nullable = false)
     private int espb;
 
@@ -63,6 +66,14 @@ public class Course {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public int getEspb() {

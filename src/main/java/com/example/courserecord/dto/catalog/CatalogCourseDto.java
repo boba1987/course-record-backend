@@ -6,6 +6,7 @@ public record CatalogCourseDto(
         Long id,
         String code,
         String title,
+        String description,
         int espb,
         CatalogProfessorDto professor,
         List<CatalogCourseSemesterDto> semesters,

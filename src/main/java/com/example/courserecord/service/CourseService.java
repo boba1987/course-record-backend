@@ -49,6 +49,7 @@ public class CourseService {
         Course c = new Course();
         c.setCode(payload.code());
         c.setTitle(payload.title());
+        c.setDescription(normalizeDescription(payload.description()));
         c.setEspb(payload.espb());
         applyProfessor(c, payload.professorId());
         applySemesters(c, payload.semesters());
@@ -62,6 +63,7 @@ public class CourseService {
         }
         c.setCode(payload.code());
         c.setTitle(payload.title());
+        c.setDescription(normalizeDescription(payload.description()));
         c.setEspb(payload.espb());
         applyProfessor(c, payload.professorId());
         if (payload.semesters() != null) {
@@ -122,7 +124,16 @@ public class CourseService {
                         .map(s -> new CourseSemesterDto(s.getId(), c.getId(), s.getSemester()))
                         .toList();
         Long profId = c.getProfessor() == null ? null : c.getProfessor().getId();
-        return new CourseDto(c.getId(), c.getCode(), c.getTitle(), c.getEspb(), profId, sems);
+        return new CourseDto(
+                c.getId(), c.getCode(), c.getTitle(), c.getDescription(), c.getEspb(), profId, sems);
+    }
+
+    private static String normalizeDescription(String description) {
+        if (description == null) {
+            return null;
+        }
+        String trimmed = description.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private static ResponseStatusException notFound(String entity) {

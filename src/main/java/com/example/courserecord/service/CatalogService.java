@@ -81,7 +81,8 @@ public class CatalogService {
                         .toList();
         List<CatalogBookDto> books =
                 c.getCourseBooks().stream().map(CourseBook::getBook).map(this::toCatalogBook).toList();
-        return new CatalogCourseDto(c.getId(), c.getCode(), c.getTitle(), c.getEspb(), prof, semesters, books);
+        return new CatalogCourseDto(
+                c.getId(), c.getCode(), c.getTitle(), c.getDescription(), c.getEspb(), prof, semesters, books);
     }
 
     private CatalogProfessorDto toCatalogProfessor(Professor p) {
