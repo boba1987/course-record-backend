@@ -9,6 +9,7 @@ import com.example.courserecord.entity.CourseSemester;
 import com.example.courserecord.entity.Professor;
 import com.example.courserecord.repository.CourseRepository;
 import com.example.courserecord.repository.ProfessorRepository;
+import jakarta.persistence.EntityManager;
 import java.util.Comparator;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -24,10 +25,15 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final ProfessorRepository professorRepository;
+    private final EntityManager entityManager;
 
-    public CourseService(CourseRepository courseRepository, ProfessorRepository professorRepository) {
+    public CourseService(
+            CourseRepository courseRepository,
+            ProfessorRepository professorRepository,
+            EntityManager entityManager) {
         this.courseRepository = courseRepository;
         this.professorRepository = professorRepository;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -67,14 +73,7 @@ public class CourseService {
         c.setEspb(payload.espb());
         applyProfessor(c, payload.professorId());
         if (payload.semesters() != null) {
-            assertDistinctSemesterOrdinals(payload.semesters());
-            c.getSemesters().clear();
-            for (CourseSemesterPayload s : payload.semesters()) {
-                CourseSemester cs = new CourseSemester();
-                cs.setCourse(c);
-                cs.setSemester(s.semester());
-                c.getSemesters().add(cs);
-            }
+            replaceSemesters(c, payload.semesters());
         }
         return toDto(courseRepository.save(c));
     }
@@ -99,8 +98,17 @@ public class CourseService {
         if (semesters == null) {
             return;
         }
+        replaceSemesters(c, semesters);
+    }
+
+    /**
+     * Replaces study-program semesters. Flushes after {@code clear()} so orphan-removal DELETEs run
+     * before INSERTs of the new rows; otherwise MySQL can reject duplicate (course_id, semester).
+     */
+    private void replaceSemesters(Course c, List<CourseSemesterPayload> semesters) {
         assertDistinctSemesterOrdinals(semesters);
         c.getSemesters().clear();
+        entityManager.flush();
         for (CourseSemesterPayload s : semesters) {
             CourseSemester cs = new CourseSemester();
             cs.setCourse(c);
