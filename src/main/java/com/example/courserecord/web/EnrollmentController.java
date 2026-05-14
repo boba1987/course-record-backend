@@ -4,6 +4,7 @@ import com.example.courserecord.dto.EnrollmentDto;
 import com.example.courserecord.dto.EnrollmentPayload;
 import com.example.courserecord.service.EnrollmentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,8 +40,16 @@ public class EnrollmentController {
     @GetMapping
     @Operation(summary = "List enrollments (paginated)")
     public Page<EnrollmentDto> list(
+            @Parameter(
+                            description =
+                                    "Substring match on student first name, last name, or index number (case-insensitive)")
+                    @RequestParam(required = false)
+                    String student,
+            @Parameter(description = "Substring match on course title or code (case-insensitive)")
+                    @RequestParam(required = false)
+                    String course,
             @ParameterObject @PageableDefault(size = 20, sort = "id") Pageable pageable) {
-        return enrollmentService.findAll(pageable);
+        return enrollmentService.findAll(pageable, student, course);
     }
 
     @GetMapping("/{id}")

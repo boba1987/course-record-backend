@@ -7,6 +7,7 @@ import com.example.courserecord.dto.CourseSemesterPayload;
 import com.example.courserecord.entity.Course;
 import com.example.courserecord.entity.CourseSemester;
 import com.example.courserecord.entity.Professor;
+import com.example.courserecord.jpa.CourseSpecifications;
 import com.example.courserecord.repository.CourseRepository;
 import com.example.courserecord.repository.ProfessorRepository;
 import jakarta.persistence.EntityManager;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -37,8 +39,11 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CourseDto> findAll(Pageable pageable) {
-        return courseRepository.findAll(pageable).map(this::toDto);
+    public Page<CourseDto> findAll(Pageable pageable, String name) {
+        if (!StringUtils.hasText(name)) {
+            return courseRepository.findAll(pageable).map(this::toDto);
+        }
+        return courseRepository.findAll(CourseSpecifications.nameContains(name), pageable).map(this::toDto);
     }
 
     @Transactional(readOnly = true)

@@ -3,12 +3,14 @@ package com.example.courserecord.service;
 import com.example.courserecord.dto.StudentDto;
 import com.example.courserecord.dto.StudentPayload;
 import com.example.courserecord.entity.Student;
+import com.example.courserecord.jpa.StudentSpecifications;
 import com.example.courserecord.repository.StudentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -22,8 +24,13 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
-    public Page<StudentDto> findAll(Pageable pageable) {
-        return studentRepository.findAll(pageable).map(this::toDto);
+    public Page<StudentDto> findAll(Pageable pageable, String firstName, String lastName) {
+        if (!StringUtils.hasText(firstName) && !StringUtils.hasText(lastName)) {
+            return studentRepository.findAll(pageable).map(this::toDto);
+        }
+        return studentRepository
+                .findAll(StudentSpecifications.withOptionalNameFilters(firstName, lastName), pageable)
+                .map(this::toDto);
     }
 
     @Transactional(readOnly = true)

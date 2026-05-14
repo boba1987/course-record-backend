@@ -3,12 +3,14 @@ package com.example.courserecord.service;
 import com.example.courserecord.dto.AuthorDto;
 import com.example.courserecord.dto.AuthorPayload;
 import com.example.courserecord.entity.Author;
+import com.example.courserecord.jpa.AuthorSpecifications;
 import com.example.courserecord.repository.AuthorRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -22,8 +24,13 @@ public class AuthorService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AuthorDto> findAll(Pageable pageable) {
-        return authorRepository.findAll(pageable).map(this::toDto);
+    public Page<AuthorDto> findAll(Pageable pageable, String firstName, String lastName) {
+        if (!StringUtils.hasText(firstName) && !StringUtils.hasText(lastName)) {
+            return authorRepository.findAll(pageable).map(this::toDto);
+        }
+        return authorRepository
+                .findAll(AuthorSpecifications.withOptionalNameFilters(firstName, lastName), pageable)
+                .map(this::toDto);
     }
 
     @Transactional(readOnly = true)
