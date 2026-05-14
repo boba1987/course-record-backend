@@ -63,11 +63,11 @@ public class CourseService {
         c.setEspb(payload.espb());
         applyProfessor(c, payload.professorId());
         if (payload.semesters() != null) {
+            assertDistinctSemesterOrdinals(payload.semesters());
             c.getSemesters().clear();
             for (CourseSemesterPayload s : payload.semesters()) {
                 CourseSemester cs = new CourseSemester();
                 cs.setCourse(c);
-                cs.setAcademicYear(s.academicYear());
                 cs.setSemester(s.semester());
                 c.getSemesters().add(cs);
             }
@@ -95,26 +95,29 @@ public class CourseService {
         if (semesters == null) {
             return;
         }
+        assertDistinctSemesterOrdinals(semesters);
         c.getSemesters().clear();
         for (CourseSemesterPayload s : semesters) {
             CourseSemester cs = new CourseSemester();
             cs.setCourse(c);
-            cs.setAcademicYear(s.academicYear());
             cs.setSemester(s.semester());
             c.getSemesters().add(cs);
+        }
+    }
+
+    private static void assertDistinctSemesterOrdinals(List<CourseSemesterPayload> semesters) {
+        long distinct = semesters.stream().map(CourseSemesterPayload::semester).distinct().count();
+        if (distinct != semesters.size()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Duplicate study-program semester for the same course");
         }
     }
 
     private CourseDto toDto(Course c) {
         List<CourseSemesterDto> sems =
                 c.getSemesters().stream()
-                        .sorted(
-                                Comparator.comparingInt(CourseSemester::getAcademicYear)
-                                        .thenComparingInt(CourseSemester::getSemester))
-                        .map(
-                                s ->
-                                        new CourseSemesterDto(
-                                                s.getId(), c.getId(), s.getAcademicYear(), s.getSemester()))
+                        .sorted(Comparator.comparingInt(CourseSemester::getSemester))
+                        .map(s -> new CourseSemesterDto(s.getId(), c.getId(), s.getSemester()))
                         .toList();
         Long profId = c.getProfessor() == null ? null : c.getProfessor().getId();
         return new CourseDto(c.getId(), c.getCode(), c.getTitle(), c.getEspb(), profId, sems);

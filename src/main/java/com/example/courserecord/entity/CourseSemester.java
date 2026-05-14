@@ -10,14 +10,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import org.hibernate.annotations.Check;
 
 @Entity
 @Table(
         name = "course_semester",
         uniqueConstraints =
                 @UniqueConstraint(
-                        name = "uk_course_semester_course_year_semester",
-                        columnNames = {"course_id", "academic_year", "semester"}))
+                        name = "uk_course_semester_course_semester",
+                        columnNames = {"course_id", "semester"}))
+@Check(constraints = "semester between 1 and 8")
 public class CourseSemester {
 
     @Id
@@ -28,9 +30,7 @@ public class CourseSemester {
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
-    @Column(name = "academic_year", nullable = false)
-    private int academicYear;
-
+    /** Study-program semester ordinal 1–8 (two semesters per year over four years). */
     @Column(nullable = false)
     private int semester;
 
@@ -48,14 +48,6 @@ public class CourseSemester {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public int getAcademicYear() {
-        return academicYear;
-    }
-
-    public void setAcademicYear(int academicYear) {
-        this.academicYear = academicYear;
     }
 
     public int getSemester() {

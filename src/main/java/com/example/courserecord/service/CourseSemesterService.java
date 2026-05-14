@@ -37,9 +37,11 @@ public class CourseSemesterService {
 
     public CourseSemesterDto create(CourseSemesterUpsertPayload payload) {
         Course course = courseRepository.findById(payload.courseId()).orElseThrow(() -> notFound("Course"));
+        if (courseSemesterRepository.existsByCourse_IdAndSemester(course.getId(), payload.semester())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Semester already scheduled for this course");
+        }
         CourseSemester cs = new CourseSemester();
         cs.setCourse(course);
-        cs.setAcademicYear(payload.academicYear());
         cs.setSemester(payload.semester());
         course.getSemesters().add(cs);
         courseRepository.save(course);
@@ -49,13 +51,17 @@ public class CourseSemesterService {
     public CourseSemesterDto update(Long id, CourseSemesterUpsertPayload payload) {
         CourseSemester cs = courseSemesterRepository.findById(id).orElseThrow(() -> notFound("Course semester"));
         Course newCourse = courseRepository.findById(payload.courseId()).orElseThrow(() -> notFound("Course"));
-        if (!cs.getCourse().getId().equals(newCourse.getId())) {
-            cs.getCourse().getSemesters().remove(cs);
+        Course oldCourse = cs.getCourse();
+        if (!oldCourse.getId().equals(newCourse.getId())) {
+            oldCourse.getSemesters().remove(cs);
+            courseRepository.save(oldCourse);
             cs.setCourse(newCourse);
             newCourse.getSemesters().add(cs);
-            courseRepository.save(cs.getCourse());
         }
-        cs.setAcademicYear(payload.academicYear());
+        if (courseSemesterRepository.existsByCourse_IdAndSemesterAndIdNot(
+                newCourse.getId(), payload.semester(), id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Semester already scheduled for this course");
+        }
         cs.setSemester(payload.semester());
         courseRepository.save(newCourse);
         return toDto(courseSemesterRepository.save(cs));
@@ -69,8 +75,7 @@ public class CourseSemesterService {
     }
 
     private CourseSemesterDto toDto(CourseSemester s) {
-        return new CourseSemesterDto(
-                s.getId(), s.getCourse().getId(), s.getAcademicYear(), s.getSemester());
+        return new CourseSemesterDto(s.getId(), s.getCourse().getId(), s.getSemester());
     }
 
     private static ResponseStatusException notFound(String entity) {
