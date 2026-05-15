@@ -1,8 +1,4 @@
-# Database schema (Course Record)
-
-This document mirrors the JPA model under `com.example.courserecord.entity` and the **Liquibase** changelog. On GitHub, the diagram below renders as graphics; in other viewers, use a [Mermaid](https://mermaid.js.org/) preview or copy the block into the [Mermaid Live Editor](https://mermaid.live/).
-
-## Entity–relationship diagram
+# Entity–relationship diagram
 
 ```mermaid
 erDiagram
