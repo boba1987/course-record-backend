@@ -9,4 +9,5 @@ public record CourseDto(
         String description,
         int espb,
         Long professorId,
-        List<CourseSemesterDto> semesters) {}
+        List<CourseSemesterDto> semesters,
+        List<BookDto> books) {}

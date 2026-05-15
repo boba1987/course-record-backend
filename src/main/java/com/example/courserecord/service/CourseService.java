@@ -1,10 +1,13 @@
 package com.example.courserecord.service;
 
+import com.example.courserecord.dto.BookDto;
 import com.example.courserecord.dto.CourseDto;
 import com.example.courserecord.dto.CoursePayload;
 import com.example.courserecord.dto.CourseSemesterDto;
 import com.example.courserecord.dto.CourseSemesterPayload;
+import com.example.courserecord.entity.Book;
 import com.example.courserecord.entity.Course;
+import com.example.courserecord.entity.CourseBook;
 import com.example.courserecord.entity.CourseSemester;
 import com.example.courserecord.entity.Professor;
 import com.example.courserecord.jpa.CourseSpecifications;
@@ -40,16 +43,19 @@ public class CourseService {
 
     @Transactional(readOnly = true)
     public Page<CourseDto> findAll(Pageable pageable, String name) {
-        if (!StringUtils.hasText(name)) {
-            return courseRepository.findAll(pageable).map(this::toDto);
-        }
-        return courseRepository.findAll(CourseSpecifications.nameContains(name), pageable).map(this::toDto);
+        Page<Course> page =
+                !StringUtils.hasText(name)
+                        ? courseRepository.findAll(pageable)
+                        : courseRepository.findAll(CourseSpecifications.nameContains(name), pageable);
+        prefetchCourseBooks(page.getContent());
+        return page.map(this::toDto);
     }
 
     @Transactional(readOnly = true)
     public CourseDto findById(Long id) {
         Course c = courseRepository.findById(id).orElseThrow(() -> notFound("Course"));
         c.getSemesters().size();
+        prefetchCourseBooks(List.of(c));
         return toDto(c);
     }
 
@@ -64,7 +70,9 @@ public class CourseService {
         c.setEspb(payload.espb());
         applyProfessor(c, payload.professorId());
         applySemesters(c, payload.semesters());
-        return toDto(courseRepository.save(c));
+        Course saved = courseRepository.save(c);
+        prefetchCourseBooks(List.of(saved));
+        return toDto(saved);
     }
 
     public CourseDto update(Long id, CoursePayload payload) {
@@ -80,7 +88,9 @@ public class CourseService {
         if (payload.semesters() != null) {
             replaceSemesters(c, payload.semesters());
         }
-        return toDto(courseRepository.save(c));
+        Course saved = courseRepository.save(c);
+        prefetchCourseBooks(List.of(saved));
+        return toDto(saved);
     }
 
     public void delete(Long id) {
@@ -130,15 +140,33 @@ public class CourseService {
         }
     }
 
+    private void prefetchCourseBooks(List<Course> courses) {
+        List<Long> ids = courses.stream().map(Course::getId).toList();
+        if (!ids.isEmpty()) {
+            courseRepository.findAllForPublicCatalogWithBooks(ids);
+        }
+    }
+
     private CourseDto toDto(Course c) {
         List<CourseSemesterDto> sems =
                 c.getSemesters().stream()
                         .sorted(Comparator.comparingInt(CourseSemester::getSemester))
                         .map(s -> new CourseSemesterDto(s.getId(), c.getId(), s.getSemester()))
                         .toList();
+        List<BookDto> books =
+                c.getCourseBooks().stream()
+                        .map(CourseBook::getBook)
+                        .sorted(Comparator.comparing(Book::getTitle, String.CASE_INSENSITIVE_ORDER))
+                        .map(this::toBookDto)
+                        .toList();
         Long profId = c.getProfessor() == null ? null : c.getProfessor().getId();
         return new CourseDto(
-                c.getId(), c.getCode(), c.getTitle(), c.getDescription(), c.getEspb(), profId, sems);
+                c.getId(), c.getCode(), c.getTitle(), c.getDescription(), c.getEspb(), profId, sems, books);
+    }
+
+    private BookDto toBookDto(Book b) {
+        Long authorId = b.getAuthor() == null ? null : b.getAuthor().getId();
+        return new BookDto(b.getId(), b.getTitle(), b.getPublicationDate(), authorId);
     }
 
     private static String normalizeDescription(String description) {
