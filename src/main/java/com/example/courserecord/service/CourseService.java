@@ -11,6 +11,7 @@ import com.example.courserecord.entity.CourseBook;
 import com.example.courserecord.entity.CourseSemester;
 import com.example.courserecord.entity.Professor;
 import com.example.courserecord.jpa.CourseSpecifications;
+import com.example.courserecord.repository.BookRepository;
 import com.example.courserecord.repository.CourseRepository;
 import com.example.courserecord.repository.ProfessorRepository;
 import jakarta.persistence.EntityManager;
@@ -30,14 +31,17 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final ProfessorRepository professorRepository;
+    private final BookRepository bookRepository;
     private final EntityManager entityManager;
 
     public CourseService(
             CourseRepository courseRepository,
             ProfessorRepository professorRepository,
+            BookRepository bookRepository,
             EntityManager entityManager) {
         this.courseRepository = courseRepository;
         this.professorRepository = professorRepository;
+        this.bookRepository = bookRepository;
         this.entityManager = entityManager;
     }
 
@@ -70,6 +74,7 @@ public class CourseService {
         c.setEspb(payload.espb());
         applyProfessor(c, payload.professorId());
         applySemesters(c, payload.semesters());
+        applyBooks(c, payload.bookIds());
         Course saved = courseRepository.save(c);
         prefetchCourseBooks(List.of(saved));
         return toDto(saved);
@@ -87,6 +92,9 @@ public class CourseService {
         applyProfessor(c, payload.professorId());
         if (payload.semesters() != null) {
             replaceSemesters(c, payload.semesters());
+        }
+        if (payload.bookIds() != null) {
+            replaceBooks(c, payload.bookIds());
         }
         Course saved = courseRepository.save(c);
         prefetchCourseBooks(List.of(saved));
@@ -116,6 +124,13 @@ public class CourseService {
         replaceSemesters(c, semesters);
     }
 
+    private void applyBooks(Course c, List<Long> bookIds) {
+        if (bookIds == null) {
+            return;
+        }
+        replaceBooks(c, bookIds);
+    }
+
     /**
      * Replaces study-program semesters. Flushes after {@code clear()} so orphan-removal DELETEs run
      * before INSERTs of the new rows; otherwise MySQL can reject duplicate (course_id, semester).
@@ -137,6 +152,31 @@ public class CourseService {
         if (distinct != semesters.size()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Duplicate study-program semester for the same course");
+        }
+    }
+
+    /**
+     * Replaces linked books. Flushes after {@code clear()} so orphan-removal DELETEs run before INSERTs;
+     * otherwise MySQL can reject duplicate (course_id, book_id).
+     */
+    private void replaceBooks(Course c, List<Long> bookIds) {
+        assertDistinctBookIds(bookIds);
+        c.getCourseBooks().clear();
+        entityManager.flush();
+        for (Long bookId : bookIds) {
+            Book book = bookRepository.findById(bookId).orElseThrow(() -> notFound("Book"));
+            CourseBook cb = new CourseBook();
+            cb.setCourse(c);
+            cb.setBook(book);
+            c.getCourseBooks().add(cb);
+        }
+    }
+
+    private static void assertDistinctBookIds(List<Long> bookIds) {
+        long distinct = bookIds.stream().distinct().count();
+        if (distinct != bookIds.size()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Duplicate book for the same course");
         }
     }
 

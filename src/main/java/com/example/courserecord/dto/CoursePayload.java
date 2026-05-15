@@ -12,4 +12,5 @@ public record CoursePayload(
         @Size(max = 8000) String description,
         @NotNull @Positive Integer espb,
         Long professorId,
-        List<CourseSemesterPayload> semesters) {}
+        List<CourseSemesterPayload> semesters,
+        List<Long> bookIds) {}
