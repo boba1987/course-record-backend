@@ -2,6 +2,8 @@
 
 Backend service for managing and publishing **university course records**: courses (with study-program semesters 1–8), professors, students, enrollments, exams, authors, books, and links between courses and books. It exposes a **JWT-protected admin API** for full CRUD and **public read-only** catalog endpoints.
 
+**Database model:** ER diagram, foreign keys, and unique constraints are documented in [docs/database.md](docs/database.md).
+
 ---
 
 ## Tech stack
